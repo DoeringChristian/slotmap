@@ -252,7 +252,10 @@ impl<K: Key, V> DenseSlotMap<K, V> {
     /// ```
     #[inline(always)]
     pub fn insert(&mut self, value: V) -> K {
-        unsafe { self.try_insert_with_key::<_, Never>(move |_| Ok(value)).unwrap_unchecked_() }
+        unsafe {
+            self.try_insert_with_key::<_, Never>(move |_| Ok(value))
+                .unwrap_unchecked_()
+        }
     }
 
     /// Inserts a value given by `f` into the slot map. The key where the
@@ -277,7 +280,10 @@ impl<K: Key, V> DenseSlotMap<K, V> {
     where
         F: FnOnce(K) -> V,
     {
-        unsafe { self.try_insert_with_key::<_, Never>(move |k| Ok(f(k))).unwrap_unchecked_() }
+        unsafe {
+            self.try_insert_with_key::<_, Never>(move |k| Ok(f(k)))
+                .unwrap_unchecked_()
+        }
     }
 
     /// Inserts a value given by `f` into the slot map. The key where the
@@ -515,7 +521,10 @@ impl<K: Key, V> DenseSlotMap<K, V> {
     /// ```
     pub unsafe fn get_unchecked(&self, key: K) -> &V {
         debug_assert!(self.contains_key(key));
-        let idx = self.slots.get_unchecked(key.data().idx as usize).idx_or_free;
+        let idx = self
+            .slots
+            .get_unchecked(key.data().idx as usize)
+            .idx_or_free;
         &self.values.get_unchecked(idx as usize)
     }
 
@@ -565,7 +574,10 @@ impl<K: Key, V> DenseSlotMap<K, V> {
     /// ```
     pub unsafe fn get_unchecked_mut(&mut self, key: K) -> &mut V {
         debug_assert!(self.contains_key(key));
-        let idx = self.slots.get_unchecked(key.data().idx as usize).idx_or_free;
+        let idx = self
+            .slots
+            .get_unchecked(key.data().idx as usize)
+            .idx_or_free;
         self.values.get_unchecked_mut(idx as usize)
     }
 
@@ -784,6 +796,30 @@ impl<K: Key, V> DenseSlotMap<K, V> {
         ValuesMut {
             inner: self.iter_mut(),
         }
+    }
+
+    ///
+    /// Returns slices into the values and keys of this slotmap.
+    /// The order is not guaranteed so do NOT index into this slice.
+    ///
+    pub fn as_slices(&self) -> (&[K], &[V]) {
+        (&self.keys, &self.values)
+    }
+
+    ///
+    /// Returns a slice into the values of this slotmap.
+    /// The order is not guaranteed so do NOT index into this slice.
+    ///
+    pub fn values_as_slice(&self) -> &[V] {
+        &self.values
+    }
+
+    ///
+    /// Returns a slice into the keys of this slotmap.
+    /// The order is not guaranteed so do NOT index into this slice.
+    ///
+    pub fn keys_as_slice(&self) -> &[K] {
+        &self.keys
     }
 }
 
@@ -1132,7 +1168,10 @@ mod serialize {
             }
 
             // Ensure the first slot exists and is empty for the sentinel.
-            if serde_slots.get(0).map_or(true, |slot| slot.version % 2 == 1) {
+            if serde_slots
+                .get(0)
+                .map_or(true, |slot| slot.version % 2 == 1)
+            {
                 return Err(de::Error::custom(&"first slot not empty"));
             }
 
